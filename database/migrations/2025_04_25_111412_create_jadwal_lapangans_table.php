@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('jadwal_lapangans', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('lapangan_id')->constrained()->cascadeOnDelete();
+            $table->date('tanggal');
+            $table->time('jam');
+            $table->enum('jadwal_tersedia', ['tersedia', 'dipesan']);
             $table->timestamps();
         });
     }
