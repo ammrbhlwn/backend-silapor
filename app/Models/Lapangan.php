@@ -23,4 +23,24 @@ class Lapangan extends Model
     protected $casts = [
         'tipe_lapangan' => TipeLapangan::class,
     ];
+
+    public function pengelola()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(User::class, 'favorite', 'lapangan_id', 'user_id');
+    }
+
+    public function jadwals()
+    {
+        return $this->hasMany(JadwalLapangan::class, 'lapangan_id');
+    }
+
+    public function transaksiBookings()
+    {
+        return $this->hasMany(TransaksiBooking::class, 'lapangan_id');
+    }
 }

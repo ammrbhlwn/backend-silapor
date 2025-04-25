@@ -27,10 +27,18 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
+    public function lapangans()
     {
-        return [
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(Lapangan::class, 'user_id');
+    }
+
+    public function favorites()
+    {
+        return $this->belongsToMany(Lapangan::class, 'favorite', 'user_id', 'lapangan_id');
+    }
+
+    public function transaksiBookings()
+    {
+        return $this->hasMany(TransaksiBooking::class, 'user_id');
     }
 }

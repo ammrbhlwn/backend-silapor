@@ -20,4 +20,14 @@ class TransaksiBooking extends Model
     protected $casts = [
         'status_transaksi' => StatusTransaksi::class,
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function lapangan()
+    {
+        return $this->belongsTo(Lapangan::class, 'lapangan_id');
+    }
 }

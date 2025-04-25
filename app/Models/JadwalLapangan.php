@@ -16,4 +16,9 @@ class JadwalLapangan extends Model
     protected $casts = [
         'jadwal_tersedia' => JadwalLapangan::class,
     ];
+
+    public function lapangan()
+    {
+        return $this->belongsTo(Lapangan::class, 'lapangan_id');
+    }
 }
