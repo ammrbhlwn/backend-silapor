@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 // route auth
 Route::post('/user/register', [AuthController::class, 'register_user']);
-Route::post('/user/login', [AuthController::class, 'login']);
+Route::post('/user/login', [AuthController::class, 'login_user']);
 Route::post('/pengelola/register', [AuthController::class, 'register_pengelola']);
 Route::post('/pengelola/login', [AuthController::class, 'login_pengelola']);
 

@@ -26,7 +26,6 @@ class AuthController extends Controller
 
             $fields['password'] = bcrypt($fields['password']);
             $fields['role'] = 'user';
-            $fields['username'] = strtolower(str_replace(' ', '_', $fields['nama']));
 
             // buat user
             $user = User::create($fields);
@@ -39,11 +38,11 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User created successfully',
-            'user' => $user->only(['id', 'nama', 'username', 'email', 'role']),
+            'user' => $user->only(['id', 'nama', 'email', 'role']),
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login_user(Request $request)
     {
         $fields = $request->validate([
             'email' => 'required|string|email',
@@ -81,8 +80,41 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User Login Successful',
-            'user' => $user->only(['id', 'nama', 'username', 'email', 'role']),
+            'user' => $user->only(['id', 'nama', 'email', 'role']),
             'token' => $token
+        ], 201);
+    }
+
+    public function register_pengelola(Request $request)
+    {
+        $fields = $request->validate([
+            'nama' => 'required|string',
+            'email' => 'required|string|email',
+            'password' => 'required|string'
+        ]);
+
+        try {
+            if (User::where('email', $fields['email'])->exists()) {
+                return response()->json([
+                    'message' => 'Email already exists',
+                ], 409);
+            }
+
+            $fields['password'] = bcrypt($fields['password']);
+            $fields['role'] = 'pengelola';
+
+            // buat pengelola
+            $user = User::create($fields);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Pengelola created successfully',
+            'user' => $user->only(['id', 'nama', 'email', 'role']),
         ], 201);
     }
 
@@ -123,8 +155,8 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'message' => 'Admin Login Successful',
-            'user' => $user->only(['id', 'nama', 'username', 'email', 'role']),
+            'message' => 'Pengelola Login Successful',
+            'user' => $user->only(['id', 'nama', 'email', 'role']),
             'token' => $token
         ], 201);
     }
@@ -136,11 +168,11 @@ class AuthController extends Controller
         if ($user) {
             $user->tokens()->delete();
             return response()->json([
-                'message' => 'User Logout Successful',
+                'message' => 'Logout Successful',
             ], 200);
         } else {
             return response()->json([
-                'message' => 'User Logout Failed',
+                'message' => 'Logout Failed',
             ], 404);
         }
     }
