@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TipeLapangan;
 use App\Models\Lapangan;
 use App\Models\TransaksiBooking;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class PengelolaController extends Controller
         $request->validate([
             'nama' => 'required|string',
             'tipe_lapangan' => 'required|in:futsal,badminton',
-            'foto' => 'required|string',
+            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'harga' => 'required|integer',
             'jam_buka' => 'required',
             'jam_tutup' => 'required',
@@ -57,9 +58,19 @@ class PengelolaController extends Controller
         ]);
 
         try {
+            $path = $request->file('foto')->store('foto-lapangan', 'public');
+
             $lapangan = Lapangan::create([
-                'user_id' => $request->user,
-                ...$request->all()
+                'user_id' => $request->user()->id,
+                'nama' => $request->nama,
+                'foto' => $path, // SIMPAN PATH-NYA
+                'harga' => $request->harga,
+                'jam_buka' => $request->jam_buka,
+                'jam_tutup' => $request->jam_tutup,
+                'kota' => $request->kota,
+                'lokasi' => $request->lokasi,
+                'link_lokasi' => $request->link_lokasi,
+                'tipe_lapangan' => TipeLapangan::from($request->tipe_lapangan),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -88,10 +99,19 @@ class PengelolaController extends Controller
         ]);
 
         try {
-            $user = $request->user();
+            $user = $request->user()->id;
             $lapangan = Lapangan::where('id', $id)->where('user_id', $user)->first();
 
-            $lapangan->update($request);
+            $lapangan->update($request->only([
+                'nama',
+                'tipe_lapangan',
+                'harga',
+                'jam_buka',
+                'jam_tutup',
+                'kota',
+                'lokasi',
+                'link_lokasi',
+            ]));
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred',
@@ -108,7 +128,7 @@ class PengelolaController extends Controller
     public function hapus_lapangan(Request $request, $id)
     {
         try {
-            $user = $request->user();
+            $user = $request->user()->id;
             $lapangan = Lapangan::where('id', $id)->where('user_id', $user)->first();
             $lapangan->delete();
         } catch (\Exception $e) {
