@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     public function favorites()
     {
-        return $this->belongsToMany(Lapangan::class, 'favorite', 'user_id', 'lapangan_id');
+        return $this->belongsToMany(Lapangan::class, 'favorites', 'user_id', 'lapangan_id');
     }
 
     public function transaksiBookings()

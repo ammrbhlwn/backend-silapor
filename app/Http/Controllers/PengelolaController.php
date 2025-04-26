@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TipeLapangan;
+use App\Models\JadwalLapangan;
 use App\Models\Lapangan;
 use App\Models\TransaksiBooking;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PengelolaController extends Controller
@@ -12,12 +14,23 @@ class PengelolaController extends Controller
     public function lihat_daftar_transaksi(Request $request)
     {
         try {
-            $user = $request->user();;
+            $userId = $request->user()->id;
             $transaksi = TransaksiBooking::with('user', 'lapangan')
-                ->whereHas('lapangan', function ($query) use ($user) {
-                    $query->where('user_id', $user);
+                ->whereHas('lapangan', function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
                 })
-                ->get();
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'tanggal_booking' => $item->tanggal_booking,
+                        'jam_mulai' => $item->jam_mulai,
+                        'jam_selesai' => $item->jam_selesai,
+                        'status_transaksi' => $item->status_transaksi,
+                        'nama_lapangan' => $item->lapangan->nama,
+                        'foto' => $item->lapangan->foto,
+                    ];
+                });
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred',
@@ -31,16 +44,36 @@ class PengelolaController extends Controller
     public function lihat_detail_transaksi($id)
     {
         try {
-            $transaksi = TransaksiBooking::with('user', 'lapangan')->find($id);
-            $this->authorize('view', $transaksi->lapangan);
+            $transaksi = TransaksiBooking::with('lapangan')->find($id);
+
+            if ($transaksi) {
+                return response()->json([
+                    'message' => 'Detail transaksi pengguna',
+                    'data' => [
+                        'id' => $transaksi->id,
+                        'tanggal_booking' => $transaksi->tanggal_booking,
+                        'jam_mulai' => $transaksi->jam_mulai,
+                        'jam_selesai' => $transaksi->jam_selesai,
+                        'total_harga' => $transaksi->total_harga,
+                        'bukti_pembayaran' => $transaksi->bukti_pembayaran,
+                        'status_transaksi' => $transaksi->status_transaksi,
+                        'nama_penyewa' => $transaksi->user->nama,
+                        'nama_lapangan' => $transaksi->lapangan->nama,
+                        'foto' => $transaksi->lapangan->foto,
+                        'lokasi' => $transaksi->lapangan->lokasi,
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'message' => 'Transaksi tidak ditemukan',
+                ], 404);
+            }
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred',
                 'error' => $e->getMessage(),
             ], 500);
         }
-
-        return response()->json($transaksi);
     }
 
     public function tambah_lapangan(Request $request)
@@ -56,6 +89,29 @@ class PengelolaController extends Controller
             'lokasi' => 'required|string',
             'link_lokasi' => 'required|string',
         ]);
+
+        // Validasi  harga
+        if ($request->harga <= 0) {
+            return response()->json([
+                'message' => 'Harga harus lebih dari 0',
+            ], 422);
+        }
+
+        // Validasi jam buka & jam tutup
+        $jamBuka = Carbon::createFromFormat('H:i', $request->jam_buka);
+        $jamTutup = Carbon::createFromFormat('H:i', $request->jam_tutup);
+
+        if ($jamBuka->eq($jamTutup)) {
+            return response()->json([
+                'message' => 'Jam buka dan jam tutup tidak boleh sama',
+            ], 422);
+        }
+
+        if ($jamBuka->gt($jamTutup)) {
+            return response()->json([
+                'message' => 'Jam buka tidak boleh setelah jam tutup',
+            ], 422);
+        }
 
         try {
             $path = $request->file('foto')->store('foto-lapangan', 'public');
@@ -99,8 +155,39 @@ class PengelolaController extends Controller
         ]);
 
         try {
-            $user = $request->user()->id;
-            $lapangan = Lapangan::where('id', $id)->where('user_id', $user)->first();
+            $userId = $request->user()->id;
+            $lapangan = Lapangan::where('id', $id)->where('user_id', $userId)->first();
+
+            if (!$lapangan) {
+                return response()->json([
+                    'message' => 'Lapangan tidak ditemukan.',
+                ], 404);
+            }
+
+            // Validasi harga
+            if ($request->has('harga') && $request->harga <= 0) {
+                return response()->json([
+                    'message' => 'Harga harus lebih dari 0',
+                ], 422);
+            }
+
+            // Validasi jam buka dan jam tutup
+            if ($request->has('jam_buka') && $request->has('jam_tutup')) {
+                $jamBuka = Carbon::createFromFormat('H:i', $request->jam_buka);
+                $jamTutup = Carbon::createFromFormat('H:i', $request->jam_tutup);
+
+                if ($jamBuka->eq($jamTutup)) {
+                    return response()->json([
+                        'message' => 'Jam buka dan jam tutup tidak boleh sama',
+                    ], 422);
+                }
+
+                if ($jamBuka->gt($jamTutup)) {
+                    return response()->json([
+                        'message' => 'Jam buka tidak boleh setelah jam tutup',
+                    ], 422);
+                }
+            }
 
             $lapangan->update($request->only([
                 'nama',
@@ -128,9 +215,90 @@ class PengelolaController extends Controller
     public function hapus_lapangan(Request $request, $id)
     {
         try {
-            $user = $request->user()->id;
-            $lapangan = Lapangan::where('id', $id)->where('user_id', $user)->first();
+            $userId = $request->user()->id;
+            $lapangan = Lapangan::where('id', $id)->where('user_id', $userId)->first();
+
+            if (!$lapangan) {
+                return response()->json([
+                    'message' => 'Lapangan tidak ditemukan',
+                ], 404);
+            }
+
             $lapangan->delete();
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+        return response()->json([
+            'message' => 'Lapangan berhasil dihapus'
+        ], 200);
+    }
+
+    public function tambah_jadwal(Request $request, $id)
+    {
+        $request->validate([
+            'tanggal' => 'required|date',
+            'jam' => 'required|array',
+            'jam.*' => 'required|date_format:H:i',
+        ]);
+
+        try {
+            $lapangan = Lapangan::find($id);
+
+            if (!$lapangan) {
+                return response()->json([
+                    'message' => 'Lapangan tidak ditemukan.',
+                ], 404);
+            }
+
+            // Ambil jam buka dan tutup lapangan
+            $jamBuka = Carbon::createFromFormat('H:i', $lapangan->jam_buka);
+            $jamTutup = Carbon::createFromFormat('H:i', $lapangan->jam_tutup);
+
+            foreach ($request->jam as $jam) {
+                $jamRequest = Carbon::createFromFormat('H:i', $jam);
+
+                // Validasi bahwa jam yang diminta ada di antara jam buka dan jam tutup
+                if ($jamRequest->lt($jamBuka) || $jamRequest->gt($jamTutup)) {
+                    return response()->json([
+                        'message' => 'Jam ' . $jam . ' tidak ada di antara jam buka dan jam tutup lapangan.',
+                    ], 422);
+                }
+
+                JadwalLapangan::create([
+                    'lapangan_id' => $id,
+                    'tanggal' => $request->tanggal,
+                    'jam' => $jamRequest->format('H:i:s'),
+                    'jadwal_tersedia' => 'tersedia',
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal membuat jadwal',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Jadwal lapangan berhasil dibuat',
+        ], 201);
+    }
+
+    public function hapus_jadwal($id)
+    {
+        try {
+            $jadwal = JadwalLapangan::find($id);
+
+            if (!$jadwal) {
+                return response()->json([
+                    'message' => 'Jadwal tidak ditemukan',
+                ], 404);
+            }
+
+            // Hapus jadwal
+            $jadwal->delete();
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred',
@@ -139,7 +307,7 @@ class PengelolaController extends Controller
         }
 
         return response()->json([
-            'message' => 'Lapangan berhasil dihapus'
+            'message' => 'Jadwal berhasil dihapus',
         ], 200);
     }
 
@@ -150,17 +318,52 @@ class PengelolaController extends Controller
         ]);
 
         try {
-            $user = $request->user();
+            $userId = $request->user()->id;
             $transaksi = TransaksiBooking::with('lapangan')->find($id);
 
-            if ($transaksi->lapangan->user_id !== $user) {
+            if (!$transaksi) {
+                return response()->json([
+                    'message' => 'Transaksi tidak ditemukan',
+                ], 404);
+            }
+
+            if ($transaksi->lapangan->user_id !== $userId) {
                 return response()->json([
                     'message' => 'Unauthorized'
                 ], 403);
             }
 
+            // Update jadwal lapangan
+            if ($request->status_transaksi === 'dibatalkan') {
+                $jamInterval = [];
+                $jamMulai = Carbon::parse($transaksi->jam_mulai);
+                $jamSelesai = Carbon::parse($transaksi->jam_selesai);
+
+                for ($jam = $jamMulai->copy(); $jam->lt($jamSelesai); $jam->addHour()) {
+                    $jamInterval[] = $jam->format('H:i:s');
+                }
+
+                // Update jadwal lapangan menjadi tersedia
+                JadwalLapangan::where('lapangan_id', $transaksi->lapangan_id)
+                    ->where('tanggal', $transaksi->tanggal_booking)
+                    ->whereIn('jam', $jamInterval)
+                    ->update(['jadwal_tersedia' => 'tersedia']);
+            }
+
+            // Update status transaksi
             $transaksi->status_transaksi = $request->status_transaksi;
             $transaksi->save();
+
+            $responseData = [
+                'id' => $transaksi->id,
+                'tanggal_booking' => $transaksi->tanggal_booking,
+                'jam_mulai' => $transaksi->jam_mulai,
+                'jam_selesai' => $transaksi->jam_selesai,
+                'total_harga' => $transaksi->total_harga,
+                'status_transaksi' => $transaksi->status_transaksi,
+                'nama_lapangan' => $transaksi->lapangan->nama,
+                'foto' => $transaksi->lapangan->foto,
+            ];
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred',
@@ -170,7 +373,7 @@ class PengelolaController extends Controller
 
         return response()->json([
             'message' => 'Status transaksi diperbarui',
-            'data' => $transaksi
+            'data' => $responseData
         ], 200);
     }
 }

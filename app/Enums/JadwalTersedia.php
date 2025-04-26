@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum StatusPenayangan: string
+enum JadwalTersedia: string
 {
     case Tersedia = 'tersedia';
     case Dipesan = 'dipesan';

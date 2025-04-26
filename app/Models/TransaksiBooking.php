@@ -9,7 +9,8 @@ class TransaksiBooking extends Model
 {
     protected $fillable = [
         'tanggal_booking',
-        'jam_booking',
+        'jam_mulai',
+        'jam_selesai',
         'total_harga',
         'bukti_pembayaran',
         'status_transaksi',

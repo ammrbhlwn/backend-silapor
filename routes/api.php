@@ -28,9 +28,11 @@ Route::middleware(['auth:sanctum', 'pengelola'])->group(function () {
     Route::get('/pengelola/booking/list', [PengelolaController::class, 'lihat_daftar_transaksi']);
     Route::get('/pengelola/booking/{id}', [PengelolaController::class, 'lihat_detail_transaksi']);
     Route::post('/pengelola/lapangan', [PengelolaController::class, 'tambah_lapangan']);
+    Route::post('/pengelola/jadwal/{id}', [PengelolaController::class, 'tambah_jadwal']);
     Route::put('/pengelola/booking/{id}', [PengelolaController::class, 'edit_status_transaksi']);
     Route::put('/pengelola/lapangan/{id}', [PengelolaController::class, 'edit_data_lapangan']);
     Route::delete('/pengelola/lapangan/{id}', [PengelolaController::class, 'hapus_lapangan']);
+    Route::delete('/pengelola/jadwal/{id}', [PengelolaController::class, 'hapus_jadwal']);
 });
 
 // route user

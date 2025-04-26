@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\JadwalTersedia;
 use Illuminate\Database\Eloquent\Model;
 
 class JadwalLapangan extends Model
@@ -14,7 +15,7 @@ class JadwalLapangan extends Model
     ];
 
     protected $casts = [
-        'jadwal_tersedia' => JadwalLapangan::class,
+        'jadwal_tersedia' => JadwalTersedia::class,
     ];
 
     public function lapangan()

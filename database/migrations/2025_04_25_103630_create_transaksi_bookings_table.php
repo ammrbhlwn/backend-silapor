@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('transaksi_bookings', function (Blueprint $table) {
             $table->id();
             $table->date('tanggal_booking');
-            $table->time('jam_booking');
+            $table->time('jam_mulai');
+            $table->time('jam_selesai');
             $table->integer('total_harga');
             $table->string('bukti_pembayaran');
             $table->enum('status_transaksi', ['menunggu', 'disetujui', 'bermain', 'selesai', 'dibatalkan']);
