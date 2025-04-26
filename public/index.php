@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Kernel;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 

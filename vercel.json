@@ -1,19 +1,24 @@
 {
     "version": 2,
-    "framework": null,
     "functions": {
-        "api/index.php": { "runtime": "vercel-php@0.7.3" }
+        "api/index.php": { 
+            "runtime": "vercel-php@0.7.3" 
+        }
     },
     "routes": [
-        { "src": "/build/(.*)", "dest": "/public/build/" },
-        { "src": "/(.*)", "dest": "/api/index.php" }
+        { 
+            "src": "/build/(.*)", "dest": "/public/build/" 
+        },
+        { 
+            "src": "/(.*)", "dest": "/api/index.php" 
+        }
     ],
     "public": true,
     "buildCommand": "vite build",
     "outputDirectory": "public",
     "env": {
         "APP_ENV": "production",
-        "APP_DEBUG": "false",
+        "APP_DEBUG": "true",
         "APP_URL": "https://silapor.vercel.app",
         "APP_KEY": "base64:Jc+2f6qhO58vnZxhk3RVl+9gxpaQf0fFwSO0LwBTAaw=",
         "APP_CONFIG_CACHE": "/tmp/config.php",
