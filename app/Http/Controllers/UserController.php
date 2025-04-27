@@ -157,33 +157,40 @@ class UserController extends Controller
             $path = $file->store('bukti_pembayaran', 'public');
 
             // Jam booking harus dalam range jam buka - jam tutup
-            $jamBuka = $lapangan->jam_buka;
-            $jamTutup = $lapangan->jam_tutup;
+            $jamBuka = substr($lapangan->jam_buka, 0, 5);
+            $jamTutup = substr($lapangan->jam_tutup, 0, 5);
             $jamMulai = $request->jam_mulai;
             $jamSelesai = $request->jam_selesai;
 
-            if ($jamMulai > $jamBuka || $jamSelesai->gt($jamTutup)) {
-                return response()->json([
-                    'message' => 'Jam booking harus dalam jam buka dan jam tutup lapangan',
-                ], 422);
-            }
-
-            if ($jamMulai->gte($jamSelesai) && !$jamMulai->eq($jamSelesai)) {
+            if ($jamMulai > $jamSelesai) {
                 return response()->json([
                     'message' => 'Jam mulai harus sebelum jam selesai.',
                 ], 422);
             }
 
-            if ($jamMulai->eq($jamSelesai)) {
+            if ($jamMulai === $jamSelesai) {
                 return response()->json([
                     'message' => 'Jam mulai dan jam selesai tidak boleh sama',
                 ], 422);
             }
 
+            if ($jamMulai < $jamBuka || $jamSelesai > $jamTutup) {
+                return response()->json([
+                    'message' => 'Jam booking diluar jam operasional lapangan',
+                ], 422);
+            }
+
             // hitung durasi booking
             $jamInterval = [];
-            for ($jam = $jamMulai->copy(); $jam->lt($jamSelesai); $jam->addHour()) {
-                $jamInterval[] = $jam->format('H:i:s');
+            $jamMulai = new \DateTime($request->jam_mulai);
+            $jamSelesai = new \DateTime($request->jam_selesai);
+
+            $jamMulaiFormatted = $jamMulai->format('H:i');
+            $jamSelesaiFormatted = $jamSelesai->format('H:i');
+
+            while ($jamMulai < $jamSelesai) {
+                $jamInterval[] = $jamMulai->format('H:i');
+                $jamMulai->add(new \DateInterval('PT1H'));
             }
 
             // Cek tanggal booking di jadwal lapangan
@@ -224,8 +231,8 @@ class UserController extends Controller
                 'lapangan_id' => $request->lapangan_id,
                 'user_id' => $user->id,
                 'tanggal_booking' => $request->tanggal_booking,
-                'jam_mulai' => $jamMulai->format('H:i'),
-                'jam_selesai' => $jamSelesai->format('H:i'),
+                'jam_mulai' => $jamMulaiFormatted,
+                'jam_selesai' => $jamSelesaiFormatted,
                 'total_harga' => $totalHarga,
                 'bukti_pembayaran' => $path,
                 'status_transaksi' => 'menunggu',

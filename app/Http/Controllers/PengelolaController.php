@@ -253,8 +253,8 @@ class PengelolaController extends Controller
             }
 
             // Ambil jam buka dan tutup lapangan
-            $jamBuka = substr($lapangan->jam_buka, 0, 5);;
-            $jamTutup = substr($lapangan->jam_tutup, 0, 5);;
+            $jamBuka = substr($lapangan->jam_buka, 0, 5);
+            $jamTutup = substr($lapangan->jam_tutup, 0, 5);
 
             foreach ($request->jam as $jam) {
                 // Validasi bahwa jam yang diminta ada di antara jam buka dan jam tutup
