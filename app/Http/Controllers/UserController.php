@@ -48,15 +48,11 @@ class UserController extends Controller
         ]);
     }
 
-    public function tambah_favorite(Request $request)
+    public function tambah_favorite(Request $request, $id)
     {
         try {
-            $request->validate([
-                'lapangan_id' => 'required|exists:lapangans,id',
-            ]);
-
             $user = $request->user();
-            $user->favorites()->syncWithoutDetaching([$request->lapangan_id]);
+            $user->favorites()->syncWithoutDetaching([$id]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred',

@@ -42,6 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/booking/list', [UserController::class, 'lihat_daftar_transaksi']);
     Route::get('/user/booking/{id}', [UserController::class, 'lihat_detail_transaksi']);
     Route::post('/user/booking', [UserController::class, 'buat_transaksi']);
-    Route::post('/user/favorite', [UserController::class, 'tambah_favorite']);
+    Route::post('/user/favorite/{id}', [UserController::class, 'tambah_favorite']);
     Route::delete('/user/favorite/{id}', [UserController::class, 'hapus_favorite']);
 });
