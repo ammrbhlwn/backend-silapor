@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TipeLapangan;
 use App\Models\JadwalLapangan;
 use App\Models\Lapangan;
 use App\Models\TransaksiBooking;
@@ -98,16 +97,16 @@ class PengelolaController extends Controller
         }
 
         // Validasi jam buka & jam tutup
-        $jamBuka = Carbon::createFromFormat('H:i', $request->jam_buka);
-        $jamTutup = Carbon::createFromFormat('H:i', $request->jam_tutup);
+        $jamBuka = $request->jam_buka;
+        $jamTutup = $request->jam_tutup;
 
-        if ($jamBuka->eq($jamTutup)) {
+        if ($jamBuka == $jamTutup) {
             return response()->json([
                 'message' => 'Jam buka dan jam tutup tidak boleh sama',
             ], 422);
         }
 
-        if ($jamBuka->gt($jamTutup)) {
+        if ($jamBuka > $jamTutup) {
             return response()->json([
                 'message' => 'Jam buka tidak boleh setelah jam tutup',
             ], 422);
@@ -119,14 +118,14 @@ class PengelolaController extends Controller
             $lapangan = Lapangan::create([
                 'user_id' => $request->user()->id,
                 'nama' => $request->nama,
-                'foto' => $path, // SIMPAN PATH-NYA
+                'foto' => $path,
                 'harga' => $request->harga,
                 'jam_buka' => $request->jam_buka,
                 'jam_tutup' => $request->jam_tutup,
                 'kota' => $request->kota,
                 'lokasi' => $request->lokasi,
                 'link_lokasi' => $request->link_lokasi,
-                'tipe_lapangan' => TipeLapangan::from($request->tipe_lapangan),
+                'tipe_lapangan' => $request->tipe_lapangan,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -173,16 +172,16 @@ class PengelolaController extends Controller
 
             // Validasi jam buka dan jam tutup
             if ($request->has('jam_buka') && $request->has('jam_tutup')) {
-                $jamBuka = Carbon::createFromFormat('H:i', $request->jam_buka);
-                $jamTutup = Carbon::createFromFormat('H:i', $request->jam_tutup);
+                $jamBuka = $request->jam_buka;
+                $jamTutup = $request->jam_tutup;
 
-                if ($jamBuka->eq($jamTutup)) {
+                if ($jamBuka === $jamTutup) {
                     return response()->json([
                         'message' => 'Jam buka dan jam tutup tidak boleh sama',
                     ], 422);
                 }
 
-                if ($jamBuka->gt($jamTutup)) {
+                if ($jamBuka > $jamTutup) {
                     return response()->json([
                         'message' => 'Jam buka tidak boleh setelah jam tutup',
                     ], 422);
@@ -254,25 +253,32 @@ class PengelolaController extends Controller
             }
 
             // Ambil jam buka dan tutup lapangan
-            $jamBuka = Carbon::createFromFormat('H:i', $lapangan->jam_buka);
-            $jamTutup = Carbon::createFromFormat('H:i', $lapangan->jam_tutup);
+            $jamBuka = substr($lapangan->jam_buka, 0, 5);;
+            $jamTutup = substr($lapangan->jam_tutup, 0, 5);;
 
             foreach ($request->jam as $jam) {
-                $jamRequest = Carbon::createFromFormat('H:i', $jam);
-
                 // Validasi bahwa jam yang diminta ada di antara jam buka dan jam tutup
-                if ($jamRequest->lt($jamBuka) || $jamRequest->gt($jamTutup)) {
+                if ($jam < $jamBuka || $jam > $jamTutup) {
                     return response()->json([
-                        'message' => 'Jam ' . $jam . ' tidak ada di antara jam buka dan jam tutup lapangan.',
+                        'message' => 'Jam ' . $jam . ' diluar jam operasional lapangan.',
                     ], 422);
                 }
 
-                JadwalLapangan::create([
-                    'lapangan_id' => $id,
-                    'tanggal' => $request->tanggal,
-                    'jam' => $jamRequest->format('H:i:s'),
-                    'jadwal_tersedia' => 'tersedia',
-                ]);
+                // Cek apakah jadwal sudah ada di database
+                $cek = JadwalLapangan::where('lapangan_id', $id)
+                    ->where('tanggal', $request->tanggal)
+                    ->where('jam', $jam)
+                    ->first();
+
+                if (!$cek) {
+                    // Create kalau belum ada
+                    JadwalLapangan::create([
+                        'lapangan_id' => $id,
+                        'tanggal' => $request->tanggal,
+                        'jam' => $jam,
+                        'jadwal_tersedia' => 'tersedia',
+                    ]);
+                }
             }
         } catch (\Exception $e) {
             return response()->json([

@@ -142,8 +142,8 @@ class UserController extends Controller
         $request->validate([
             'lapangan_id' => 'required|integer',
             'tanggal_booking' => 'required|date',
-            'jam_mulai' => 'required|date_format:H:i',
-            'jam_selesai' => 'required|date_format:H:i',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required',
             'bukti_pembayaran' => 'required|file|mimes:jpg,jpeg,png,pdf',
         ]);
 
@@ -161,12 +161,12 @@ class UserController extends Controller
             $path = $file->store('bukti_pembayaran', 'public');
 
             // Jam booking harus dalam range jam buka - jam tutup
-            $jamBuka = Carbon::createFromFormat('H:i:s', $lapangan->jam_buka);
-            $jamTutup = Carbon::createFromFormat('H:i:s', $lapangan->jam_tutup);
-            $jamMulai = Carbon::createFromFormat('H:i', $request->jam_mulai);
-            $jamSelesai = Carbon::createFromFormat('H:i', $request->jam_selesai);
+            $jamBuka = $lapangan->jam_buka;
+            $jamTutup = $lapangan->jam_tutup;
+            $jamMulai = $request->jam_mulai;
+            $jamSelesai = $request->jam_selesai;
 
-            if ($jamMulai->lt($jamBuka) || $jamSelesai->gt($jamTutup)) {
+            if ($jamMulai > $jamBuka || $jamSelesai->gt($jamTutup)) {
                 return response()->json([
                     'message' => 'Jam booking harus dalam jam buka dan jam tutup lapangan',
                 ], 422);
