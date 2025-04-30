@@ -82,7 +82,7 @@ VITE_APP_NAME="${APP_NAME}"
 
 ## 4. Run API via Postman
 - ### Buka link tersebut
-    **[SiLapor API Documentation](https://documenter.getpostman.com/view/39302183/-2sB2izEZAv)**
+    **[SiLapor API Documentation](https://documenter.getpostman.com/view/39302183/2sB2izEZAv)**
     
 - ### Click Run in Postman
 
