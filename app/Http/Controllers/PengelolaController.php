@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JadwalLapangan;
 use App\Models\Lapangan;
 use App\Models\TransaksiBooking;
+use App\Services\SupabaseStorageService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -75,12 +76,12 @@ class PengelolaController extends Controller
         }
     }
 
-    public function tambah_lapangan(Request $request)
+    public function tambah_lapangan(Request $request, SupabaseStorageService $supabase)
     {
         $request->validate([
             'nama' => 'required|string',
-            'tipe_lapangan' => 'required|in:futsal,badminton',
             'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'tipe_lapangan' => 'required|in:futsal,badminton',
             'harga' => 'required|integer',
             'jam_buka' => 'required',
             'jam_tutup' => 'required',
@@ -113,12 +114,14 @@ class PengelolaController extends Controller
         }
 
         try {
-            $path = $request->file('foto')->store('foto-lapangan', 'public');
+            $userId = $request->user()->id;
+            $path = 'lapangan/' . $userId;
+            $fotoUrl = $supabase->uploadImage($request->file('foto'), $path);
 
             $lapangan = Lapangan::create([
                 'user_id' => $request->user()->id,
                 'nama' => $request->nama,
-                'foto' => $path,
+                'foto' => $fotoUrl,
                 'harga' => $request->harga,
                 'jam_buka' => $request->jam_buka,
                 'jam_tutup' => $request->jam_tutup,

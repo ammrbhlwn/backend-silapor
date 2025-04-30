@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nama');
             $table->enum('tipe_lapangan', ['futsal', 'badminton']);
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('foto');
+            $table->string('foto')->nullable();
             $table->integer('harga');
             $table->time('jam_buka');
             $table->time('jam_tutup');
