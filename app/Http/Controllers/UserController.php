@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JadwalLapangan;
 use App\Models\Lapangan;
 use App\Models\TransaksiBooking;
-use Carbon\Carbon;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -15,7 +15,7 @@ class UserController extends Controller
         $user = $request->user();
 
         return response()->json([
-            'message' => 'Data profil pengguna',
+            'message' => 'Success',
             'data' => [
                 'id' => $user->id,
                 'nama' => $user->nama,
@@ -43,7 +43,7 @@ class UserController extends Controller
         });
 
         return response()->json([
-            'message' => 'Daftar lapangan favorit',
+            'message' => 'Success',
             'data' => $data,
         ]);
     }
@@ -55,13 +55,13 @@ class UserController extends Controller
             $user->favorites()->syncWithoutDetaching([$id]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => 'Error',
                 'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Lapangan berhasil ditambahkan ke favorit',
+            'message' => 'Success',
         ], 201);
     }
 
@@ -71,7 +71,7 @@ class UserController extends Controller
         $user->favorites()->detach($id);
 
         return response()->json([
-            'message' => 'Lapangan berhasil dihapus dari favorit',
+            'message' => 'Success',
         ], 200);
     }
 
@@ -94,12 +94,12 @@ class UserController extends Controller
 
         if ($data->isEmpty()) {
             return response()->json([
-                'message' => 'Tidak ada transaksi',
+                'message' => 'Error',
             ], 404);
         }
 
         return response()->json([
-            'message' => 'Daftar transaksi pengguna',
+            'message' => 'Success',
             'data' => $data,
         ]);
     }
@@ -111,7 +111,7 @@ class UserController extends Controller
 
         if ($transaksi) {
             return response()->json([
-                'message' => 'Detail transaksi pengguna',
+                'message' => 'Success',
                 'data' => [
                     'id' => $transaksi->id,
                     'tanggal_booking' => $transaksi->tanggal_booking,
@@ -128,33 +128,34 @@ class UserController extends Controller
             ]);
         } else {
             return response()->json([
-                'message' => 'Transaksi tidak ditemukan',
+                'message' => 'Error',
             ], 404);
         }
     }
 
-    public function buat_transaksi(Request $request)
+    public function buat_transaksi(Request $request, SupabaseStorageService $supabase)
     {
         $request->validate([
+            'nama' => 'required|string',
+            'nomor' => 'required|string',
             'lapangan_id' => 'required|integer',
             'tanggal_booking' => 'required|date',
             'jam_mulai' => 'required',
             'jam_selesai' => 'required',
-            'bukti_pembayaran' => 'required|file|mimes:jpg,jpeg,png,pdf',
+            'bukti_pembayaran' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         try {
-            $user = $request->user();
             $lapangan = Lapangan::find($request->lapangan_id);
 
             if (!$lapangan) {
                 return response()->json([
-                    'message' => 'Silahkan pilih lapangan yang tersedia.',
+                    'message' => 'Error',
                 ], 422);
             }
 
-            $file = $request->file('bukti_pembayaran');
-            $path = $file->store('bukti_pembayaran', 'public');
+            $path = 'transaksi/' . $lapangan->id;
+            $fotoUrl = $supabase->uploadImage($request->file('bukti_pembayaran'), $path);
 
             // Jam booking harus dalam range jam buka - jam tutup
             $jamBuka = substr($lapangan->jam_buka, 0, 5);
@@ -164,19 +165,19 @@ class UserController extends Controller
 
             if ($jamMulai > $jamSelesai) {
                 return response()->json([
-                    'message' => 'Jam mulai harus sebelum jam selesai.',
+                    'message' => 'Error',
                 ], 422);
             }
 
             if ($jamMulai === $jamSelesai) {
                 return response()->json([
-                    'message' => 'Jam mulai dan jam selesai tidak boleh sama',
+                    'message' => 'Error',
                 ], 422);
             }
 
             if ($jamMulai < $jamBuka || $jamSelesai > $jamTutup) {
                 return response()->json([
-                    'message' => 'Jam booking diluar jam operasional lapangan',
+                    'message' => 'Error',
                 ], 422);
             }
 
@@ -200,7 +201,7 @@ class UserController extends Controller
 
             if (!$cekTanggal) {
                 return response()->json([
-                    'message' => 'Tanggal booking tidak tersedia di jadwal lapangan',
+                    'message' => 'Error',
                 ], 422);
             }
 
@@ -213,7 +214,7 @@ class UserController extends Controller
 
             if ($cekJadwal) {
                 return response()->json([
-                    'message' => 'Jam ' . $request->jam_mulai . ' - ' . $request->jam_selesai . ' sudah dibooking, silahkan pilih jam lain',
+                    'message' => 'Error',
                 ], 422);
             }
 
@@ -228,25 +229,101 @@ class UserController extends Controller
             $totalHarga = $jumlahJam * $lapangan->harga;
 
             $transaksi = TransaksiBooking::create([
+                'nama' => $request->nama,
+                'nomor' => $request->nomor,
                 'lapangan_id' => $request->lapangan_id,
-                'user_id' => $user->id,
                 'tanggal_booking' => $request->tanggal_booking,
                 'jam_mulai' => $jamMulaiFormatted,
                 'jam_selesai' => $jamSelesaiFormatted,
                 'total_harga' => $totalHarga,
-                'bukti_pembayaran' => $path,
+                'bukti_pembayaran' => $fotoUrl,
+                'booking_trx_id' => TransaksiBooking::generateUniqueTrxId(),
                 'status_transaksi' => 'menunggu',
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => 'Error',
                 'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Transaksi berhasil dibuat',
+            'message' => 'Success',
             'data' => $transaksi,
         ], 201);
+    }
+
+    public function lihat_status_transaksi(Request $request)
+    {
+        $request->validate([
+            'nomor' => 'required|string',
+            'booking_trx_id' => 'required|string',
+        ]);
+
+        $booking = TransaksiBooking::with('lapangan')
+            ->where('nomor', $request->nomor)
+            ->where('booking_trx_id', $request->booking_trx_id)
+            ->first();
+
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Error'
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Success',
+            'data' => [
+                'id' => $booking->id,
+                'tanggal_booking' => $booking->tanggal_booking,
+                'jam_mulai' => $booking->jam_mulai,
+                'jam_selesai' => $booking->jam_selesai,
+                'total_harga' => $booking->total_harga,
+                'bukti_pembayaran' => $booking->bukti_pembayaran,
+                'status_transaksi' => $booking->status_transaksi,
+                'nama_penyewa' => $booking->nama,
+                'nomor_hp' => $booking->nomor,
+                'nama_lapangan' => $booking->lapangan->nama,
+                'foto' => $booking->lapangan->foto,
+                'lokasi' => $booking->lapangan->lokasi,
+            ]
+        ]);
+    }
+
+    public function cek_harga(Request $request)
+    {
+        $request->validate([
+            'lapangan_id' => 'required|integer',
+            'jam_mulai' => 'required',
+            'jam_selesai' => 'required',
+        ]);
+
+        $lapangan = Lapangan::find($request->lapangan_id);
+        if (!$lapangan) {
+            return response()->json([
+                'message' => 'Lapangan tidak ditemukan',
+            ], 404);
+        }
+
+        $jamMulai = new \DateTime($request->jam_mulai);
+        $jamSelesai = new \DateTime($request->jam_selesai);
+
+        if ($jamMulai >= $jamSelesai) {
+            return response()->json([
+                'message' => 'Jam mulai harus sebelum jam selesai',
+            ], 422);
+        }
+
+        $jumlahJam = $jamSelesai->diff($jamMulai)->h;
+        $totalHarga = $jumlahJam * $lapangan->harga;
+
+        return response()->json([
+            'message' => 'Success',
+            'data' => [
+                'jumlah_jam' => $jumlahJam,
+                'harga_per_jam' => $lapangan->harga,
+                'total_harga' => $totalHarga,
+            ],
+        ]);
     }
 }

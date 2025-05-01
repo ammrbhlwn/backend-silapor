@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('transaksi_bookings', function (Blueprint $table) {
             $table->id();
+            $table->string('nama');
+            $table->string('nomor');
             $table->date('tanggal_booking');
             $table->time('jam_mulai');
             $table->time('jam_selesai');
             $table->integer('total_harga');
             $table->string('bukti_pembayaran');
             $table->enum('status_transaksi', ['menunggu', 'disetujui', 'bermain', 'selesai', 'dibatalkan']);
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('booking_trx_id');
             $table->foreignId('lapangan_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });

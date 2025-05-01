@@ -8,23 +8,30 @@ use Illuminate\Database\Eloquent\Model;
 class TransaksiBooking extends Model
 {
     protected $fillable = [
+        'nama',
+        'nomor',
         'tanggal_booking',
         'jam_mulai',
         'jam_selesai',
         'total_harga',
         'bukti_pembayaran',
         'status_transaksi',
-        'user_id',
         'lapangan_id',
+        'booking_trx_id',
     ];
 
     protected $casts = [
         'status_transaksi' => StatusTransaksi::class,
     ];
 
-    public function user()
+    public static function generateUniqueTrxId()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        $prefix = 'SLP';
+        do {
+            $randomString = $prefix . mt_rand(1000, 9999);
+        } while (self::where('booking_trx_id', $randomString)->exists());
+
+        return $randomString;
     }
 
     public function lapangan()

@@ -36,12 +36,12 @@ Route::middleware(['auth:sanctum', 'pengelola'])->group(function () {
 });
 
 // route user
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user/profile', [UserController::class, 'lihat_data_profile']);
-    Route::get('/user/favorite', [UserController::class, 'lihat_data_favorite']);
-    Route::get('/user/booking/list', [UserController::class, 'lihat_daftar_transaksi']);
-    Route::get('/user/booking/{id}', [UserController::class, 'lihat_detail_transaksi']);
-    Route::post('/user/booking', [UserController::class, 'buat_transaksi']);
-    Route::post('/user/favorite/{id}', [UserController::class, 'tambah_favorite']);
-    Route::delete('/user/favorite/{id}', [UserController::class, 'hapus_favorite']);
-});
+Route::get('/user/profile', [UserController::class, 'lihat_data_profile']);
+Route::get('/user/favorite', [UserController::class, 'lihat_data_favorite']);
+Route::get('/user/booking/list', [UserController::class, 'lihat_daftar_transaksi']);
+Route::get('/user/booking/{id}', [UserController::class, 'lihat_detail_transaksi']);
+Route::post('/user/check/booking', [UserController::class, 'lihat_status_transaksi']); //
+Route::post('/user/booking', [UserController::class, 'buat_transaksi']); //
+Route::post('/user/check/total', [UserController::class, 'cek_harga']); //
+Route::post('/user/favorite/{id}', [UserController::class, 'tambah_favorite']);
+Route::delete('/user/favorite/{id}', [UserController::class, 'hapus_favorite']);

@@ -23,13 +23,13 @@ class GuestController extends Controller
                 ->get();
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => 'Error',
                 'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Daftar lapangan badminton',
+            'message' => 'Success',
             'data' => $lapangans
         ]);
     }
@@ -50,13 +50,13 @@ class GuestController extends Controller
                 ->get();
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => 'Error',
                 'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Daftar lapangan futsal',
+            'message' => 'Success',
             'data' => $lapangans
         ]);
     }
@@ -89,13 +89,13 @@ class GuestController extends Controller
             ];
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => 'Error',
                 'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Detail lapangan',
+            'message' => 'Success',
             'data' => $data
         ]);
     }
@@ -112,13 +112,13 @@ class GuestController extends Controller
             $lapangans = $query->get();
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred',
+                'message' => 'Error',
                 'error' => $e->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'message' => 'Hasil pencarian lapangan',
+            'message' => 'Success',
             'data' => $lapangans
         ], 200);
     }
