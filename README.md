@@ -97,18 +97,13 @@ VITE_APP_NAME="${APP_NAME}"
             Variable        ➡️ base_url
             Initial value   ➡️ http://127.0.0.1:8000/api
             Current value   ➡️ http://127.0.0.1:8000/api
-
-         #### 2. Token User
-            Variable        ➡️ token_user
-            Initial value   ➡️ (null)
-            Current value   ➡️ (null)
-
-        #### 3. Token Pengelola
+      
+        #### 2. Token Pengelola
             Variable        ➡️ token_pengelola
             Initial value   ➡️ (null)
             Current value   ➡️ (null)
     
-    Note: Token user dan pengelola didapatkan ketika melakukan login. Setelah mendapatkan token, simpan ke initial value dan current token untuk masing-masing variable
+    Note: Token didapatkan ketika melakukan login. Setelah mendapatkan token, simpan ke initial value dan current token untuk masing-masing variable
 
 ## 5. Jalankan Server
 ```
