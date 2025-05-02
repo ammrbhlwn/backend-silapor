@@ -39,8 +39,12 @@ LOG_DEPRECATIONS_CHANNEL=null
 LOG_LEVEL=debug
 
 DB_CONNECTION=pgsql
-DB_URL=postgresql://postgres:si-lapor-database@db.jynmzifknyokgtbzddsr.supabase.co:5432/postgres
-DB_PASSWORD=si-lapor-database
+DB_URL=postgresql://postgres:silapordatabase@db.ewmityltnomppfgjtcyl.supabase.co:5432/postgres
+DB_PASSWORD=silapordatabase
+DB_HOST=db.ewmityltnomppfgjtcyl.supabase.co
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
 
 SESSION_DRIVER=file
 SESSION_LIFETIME=120
